@@ -58,7 +58,8 @@
                 </div>
 
                 <ul class="list-group mt-4" id="uncompleteList">
-                    <% items.filter(reminder=> !reminder.completed).forEach(reminder=> { %>
+                <!-- sort by priority and timestamp  -->
+                    <% items.filter(reminder=> !reminder.completed).sort((a, b)=> a.priority === b.priority ? a.date - b.date : b.priority - a.priority).forEach(reminder=> { %>
                         <li class="list-group-item d-flex justify-content-between align-items-center"
                             id="item<%=reminder.id%>">
                             <div id="front" class="d-flex">
@@ -68,12 +69,17 @@
                                     for="btncheck<%=reminder.id%>">&nbsp;&nbsp;&nbsp;&nbsp;</label>
                                 <div class="ms-3">
                                     <h5 class="mb-0">
+                                        <span class="text-danger"><%="!".repeat(reminder.priority)%></span>
                                         <%= reminder.title %>
                                     </h5>
                                     <p class="mb-0">
                                         <%= reminder.description %>
                                     </p>
                                 </div>
+                            </div>
+                            <div class="btn-group ms-auto me-2" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="edit<%=reminder.id%>">Edit</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="delete<%=reminder.id%>">Delete</button>
                             </div>
                             <span class="<%= reminder.date < new Date() ? 'text-danger' : '' %>">
                                 <%= reminder.date ? new Date(reminder.date).toLocaleDateString() : "" %>
@@ -84,16 +90,14 @@
 
                 <h3 class="mt-4">Completed</h3>
                 <ul class="list-group mt-4" id="completeList">
-                    <% items.filter(reminder=> reminder.completed).forEach(reminder=> { %>
-                        <li class="list-group-item d-flex justify-content-between align-items-center"
-                            id="item<%=reminder.id%>">
+                    <% items.filter(reminder => reminder.completed).sort((a, b) => a.priority === b.priority ? a.date - b.date : b.priority - a.priority).forEach(reminder => { %>
+                        <li class="list-group-item d-flex justify-content-between align-items-center" id="item<%= reminder.id %>">
                             <div id="front" class="d-flex">
-                                <input type="checkbox" class="btn-check" id="btncheck<%=reminder.id%>"
-                                    autocomplete="off" <%=reminder.completed ? 'checked' : '' %> >
-                                <label class="btn btn-outline-primary" id="btnfor<%=reminder.id%>"
-                                    for="btncheck<%=reminder.id%>">&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                                <input type="checkbox" class="btn-check" id="btncheck<%= reminder.id %>" autocomplete="off" <%= reminder.completed ? 'checked' : '' %> >
+                                <label class="btn btn-outline-primary" id="btnfor<%= reminder.id %>" for="btncheck<%= reminder.id %>">&nbsp;&nbsp;&nbsp;&nbsp;</label>
                                 <div class="ms-3">
                                     <h5 class="mb-0">
+                                        <span class="text-danger"><%= "!".repeat(reminder.priority) %></span>
                                         <%= reminder.title %>
                                     </h5>
                                     <p class="mb-0">
@@ -101,12 +105,17 @@
                                     </p>
                                 </div>
                             </div>
+                            <div class="btn-group ms-auto me-2" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="edit<%=reminder.id%>">Edit</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="delete<%=reminder.id%>">Delete</button>
+                            </div>
                             <span class="<%= reminder.date < new Date() ? 'text-danger' : '' %>">
                                 <%= reminder.date ? new Date(reminder.date).toLocaleDateString() : "" %>
                             </span>
                         </li>
-                        <% }) %>
+                    <% }) %>
                 </ul>
+                
 
             </div>
             <% } %>
@@ -173,6 +182,69 @@
         </div>
     </div>
 
+    <!-- Edit Modal -->
+
+    <div class="modal fade" id="editReminderModal" tabindex="-1" aria-labelledby="editReminderModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editReminderModalLabel">Edit Reminder</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <p class="text-danger" id="valueErrorEdit" hidden><i class="bi bi-exclamation-circle-fill"></i>
+                            Please fill all the fields</p>
+                        <input hidden readonly id="id">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="title">
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <input type="text" class="form-control" id="description">
+                        </div>
+                        <div class="form-check mb-3">
+                            <input id="dateCheckbox" class="form-check-input" type="checkbox" id="dateReminder">
+                            <label class="form-check-label" for="dateReminder">
+                                Remind me on a date
+                            </label>
+
+                            <input type="date" class="form-control" id="date" hidden>
+
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="priority" class="form-label">Priority</label>
+                            <select class="form-select" id="priority">
+                                <option value="0" selected>No priority</option>
+                                <option value="1">Low</option>
+                                <option value="2">Medium</option>
+                                <option value="3">High</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="list" class="form-label">List</label>
+                            <select class="form-select" id="list">
+                                <!-- current category is the first -->
+                                <% categories.sort((a, b)=> a.name === currentCategory ? -1 : 1).forEach(category=> { %>
+                                    <option>
+                                        <%= category.name %>
+                                    </option>
+                                    <% }) %>
+                            </select>
+                        </div>
+                        <button type="submit" id="edit" class="btn btn-primary">Edit</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Modal -->
     <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel"
         aria-hidden="true">
@@ -355,6 +427,20 @@
                 button.addEventListener('click', (event) => {
                     const categoryName = event.target.id.replace('deleteCategory', '');
                     fetch(`/api/categories/${categoryName}`, {
+                        method: 'DELETE'
+                    }).then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        }
+                    });
+                });
+            });
+
+            const deleteButtons = document.querySelectorAll('[id^="delete"]');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const id = event.target.id.replace('delete', '');
+                    fetch(`/api/reminders/${id}`, {
                         method: 'DELETE'
                     }).then(response => {
                         if (response.ok) {
