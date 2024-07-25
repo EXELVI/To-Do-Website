@@ -77,13 +77,21 @@ app.get('/auth/discord/callback',
 );
 
 
-app.get('/', async (req, res) => {
+app.get('/main', async (req, res) => {
     const db = client.db('to-do');
     const collection = db.collection('to-do');
-
-    var items = await collection.find({}).toArray();
+    var items = await collection.find({ }).toArray();
+    items = items.filter(x => x.users.includes(req.user.id));
     res.render('index', { items: items });
 });
+
+app.post('/add', async (req, res) => {
+    const db = client.db('to-do');
+    const collection = db.collection('to-do');
+    // 
+});
+
+
 
 var httpServer = http.createServer(app);
 var httpsServer = https.createServer({
