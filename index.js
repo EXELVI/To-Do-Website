@@ -105,7 +105,6 @@ router.post('/reminders', (req, res) => {
     if (!req.isAuthenticated()) return res.redirect('/auth/discord');
     const db = client.db('to-do');
     const collection = db.collection('to-do');
-    console.log(req.body)
     var title = req.body.title,
         description = req.body.description,
         date = req.body.date,
@@ -115,11 +114,17 @@ router.post('/reminders', (req, res) => {
     collection.insertOne({
         title: title,
         description: description,
-        date: date || false,
-        priority: priority,
+        date: date,
+        id: uuidv4(),
         users: [req.user.id],
+        creator: req.user.id,
+        timestamp: Date.now(),
+        completed: false,
+        completedBy: null,
+        completedTimestamp: null,
+        reminded: false,
         category: list,
-        id : uuidv4(),
+        priority: priority
     });
     res.redirect('/main');
 });
@@ -134,7 +139,9 @@ router.patch('/reminders/:id', async (req, res) => {
 
     var completed = body.completed;
 
-    await collection.updateOne({ id: id }, { $set: { completed: completed } });
+    await collection.updateOne({ id: id }, { $set: { completed: completed, completedBy: req.user.id, completedTimestamp: Date.now() } });
+
+    res.send('/main');
 });
 
 router.post("/categories", async (req, res) => {
@@ -148,6 +155,20 @@ router.post("/categories", async (req, res) => {
         name: name,
         user: req.user.id
     });
+
+    res.redirect('/main');
+});
+
+router.delete('/categories/:name', async (req, res) => {
+    if (!req.isAuthenticated()) return res.redirect('/auth/discord');
+    const db = client.db('to-do');
+    const collection = db.collection('categories');
+    const toDoCollection = db.collection('to-do');
+
+    var name = req.params.name;
+
+    await collection.deleteOne({ name: name });
+    await toDoCollection.deleteMany({ category: name });
 
     res.redirect('/main');
 });
