@@ -45,7 +45,7 @@ passport.use(new DiscordStrategy({
         let user = await users.findOne({ id: profile.id });
         if (!user) {
             user = await users.insertOne(profile);
-            return done(null, user.ops[0]);
+            return done(null, user);
         }
         done(null, user);
     }
@@ -72,23 +72,24 @@ app.get('/auth/discord', passport.authenticate('discord'));
 app.get('/auth/discord/callback',
     passport.authenticate('discord', { failureRedirect: '/' }),
     (req, res) => {
-        res.redirect('/profile');
+        res.redirect('/main');
     }
 );
 
-
 app.get('/main', async (req, res) => {
+    if (!req.isAuthenticated()) return res.redirect('/auth/discord');
     const db = client.db('to-do');
     const collection = db.collection('to-do');
     var items = await collection.find({ }).toArray();
+    var categories = await db.collection('categories').find({ }).toArray() || [];
     items = items.filter(x => x.users.includes(req.user.id));
-    res.render('index', { items: items });
+    categories = categories.filter(x => x.users.includes(req.user.id));
+    res.render('index', { items: items, categories: categories });
 });
 
 app.post('/add', async (req, res) => {
     const db = client.db('to-do');
     const collection = db.collection('to-do');
-    // 
 });
 
 
