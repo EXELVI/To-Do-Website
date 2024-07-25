@@ -6,29 +6,84 @@ const http = require('http');
 const https = require('https');
 const path = require('path');
 const fs = require('fs');
+var DiscordStrategy = require('passport-discord').Strategy;
+var passport = require('passport');
+var session = require('express-session');
 
-const app = express();
-
-app.set('view engine', 'ejs');
-app.use(express.static('public'));
-app.use(bodyParser.urlencoded({ extended: true }));
+var scopes = ['identify'];
 
 const databasePromise = MongoClient.connect(process.env.mongodb, { useNewUrlParser: true });
 
-databasePromise.then(async client => {
-    console.log('Connected to database');
+let client;
+
+databasePromise.then(connection => {
+    client = connection;
+    console.log('Database connected');
+});
+
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+    const db = client.db('to-do');
+    const users = db.collection('users');
+    const user = await users.findOne({ id });
+    done(null, user);
+});
+
+
+passport.use(new DiscordStrategy({
+    clientID: process.env.clientID,
+    clientSecret: process.env.clientSecret,
+    callbackURL: 'https://localhost/auth/discord/callback',
+    scope: scopes
+},
+    async (accessToken, refreshToken, profile, done) => {
+        const db = client.db('to-do');
+        const users = db.collection('users');
+        let user = await users.findOne({ id: profile.id });
+        if (!user) {
+            user = await users.insertOne(profile);
+            return done(null, user.ops[0]);
+        }
+        done(null, user);
+    }
+));
+
+const app = express();
+
+
+app.set('view engine', 'ejs');
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(session({
+    secret: process.env.sessionSecret,
+    resave: false,
+    saveUninitialized: false
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.get('/auth/discord', passport.authenticate('discord'));
+
+app.get('/auth/discord/callback',
+    passport.authenticate('discord', { failureRedirect: '/' }),
+    (req, res) => {
+        res.redirect('/profile');
+    }
+);
+
+
+app.get('/', async (req, res) => {
     const db = client.db('to-do');
     const collection = db.collection('to-do');
 
     var items = await collection.find({}).toArray();
-
-    app.get('/', (req, res) => {
-        res.render('index', { items: items });
-    });
-
+    res.render('index', { items: items });
 });
-
-
 
 var httpServer = http.createServer(app);
 var httpsServer = https.createServer({
@@ -37,7 +92,7 @@ var httpsServer = https.createServer({
 }, app);
 
 httpServer.listen(80, () => {
-    console.log('HTTP Server running on port 80') 
+    console.log('HTTP Server running on port 80')
 });
 
 httpsServer.listen(443, () => {
