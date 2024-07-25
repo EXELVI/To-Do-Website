@@ -28,7 +28,7 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser(async (id, done) => {
     const db = client.db('to-do');
     const users = db.collection('users');
-    const user = await users.findOne({ id });
+    const user = await users.findOne({ id: id });
     done(null, user);
 });
 
@@ -80,11 +80,23 @@ app.get('/main', async (req, res) => {
     if (!req.isAuthenticated()) return res.redirect('/auth/discord');
     const db = client.db('to-do');
     const collection = db.collection('to-do');
-    var items = await collection.find({}).toArray();
-    var categories = await db.collection('categories').find({}).toArray() || [];
+    var categories = await db.collection('categories').find({ user: req.user.id }).toArray() || [];
+    if (!req.query.category) {
+        var first = categories[0];
+        if (!first) {
+            var items = []
+            return res.render('index', { items: items, categories: categories, currentCategory: false });
+        } else {
+                return res.redirect(`/main?category=${first.name}`);
+        }
+    } 
+
+    var items = await collection.find({ category: req.query.category }).toArray() || [];
     items = items.filter(x => x.users.includes(req.user.id));
-    categories = categories.filter(x => x.users.includes(req.user.id));
-    res.render('index', { items: items, categories: categories });
+
+    res.render('index', { items: items, categories: categories, currentCategory: req.query.category });
+
+
 });
 
 router.post('/reminders', (req, res) => {
@@ -104,8 +116,36 @@ router.post('/reminders', (req, res) => {
         date: date,
         priority: priority,
         users: [req.user.id],
-        list: list
+        category: list
     });
+    res.redirect('/main');
+});
+
+router.post('/reminders/:id', async (req, res) => {
+    if (!req.isAuthenticated()) return res.redirect('/auth/discord');
+    const db = client.db('to-do');
+    const collection = db.collection('to-do');
+
+    var id = req.params.id;
+    var body = req.body;
+
+    var completed = body.completed;
+
+    await collection.updateOne({ id: id }, { $set: { completed: completed } });
+});
+
+router.post("/categories", async (req, res) => {
+    if (!req.isAuthenticated()) return res.redirect('/auth/discord');
+    const db = client.db('to-do');
+    const collection = db.collection('categories');
+
+    var name = req.body.name;
+    console.log(req.body)
+    await collection.insertOne({
+        name: name,
+        user: req.user.id
+    });
+
     res.redirect('/main');
 });
 
