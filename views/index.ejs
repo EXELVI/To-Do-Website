@@ -13,35 +13,59 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-2 vh-100">
-                <h4 class="mt-3">To-Do <!-- Edit mode button --> <button class="btn btn-primary btn-sm" id="editMode">Edit</button>
-                    </h4>
+                <h4 class="mt-3">To-Do <!-- Edit mode button --> <button class="btn btn-primary btn-sm"
+                        id="editMode">Edit</button>
+                </h4>
                 <ul class="nav flex-column mt-4">
                     <% categories.forEach(category=> { %>
                         <li class="nav-item">
                             <div class="d-flex justify-content-between align-items-center">
-                                <a class="nav-link <%= currentCategory === category.name ? 'active' : '' %>" href="/main?category=<%= category.name %>"><%= category.name %></a>
-                                <button class="btn btn-danger btn-sm rounded-circle float-end" id="deleteCategory<%= category.id %>" hidden><li class="bi bi-trash"></li></button>
-                            </div>
-                        </li>
-                        <% }) %>
+                                <a class="nav-link <%= currentCategory === category.name ? 'active' : '' %>"
+                                    href="/main?category=<%= category.name %>">
+                                    <%= category.name %>
+                                        <div id="stats">
+                                            <div class="badge bg-primary rounded-pill" id="total<%= category.name %>">
+                                                <%= category.size%>
+                                            </div>
+                                            <div class="badge bg-danger rounded-pill"
+                                                id="uncompleted<%= category.name %>">
+                                                <%= category.sizeUncompleted%>
+                                            </div>
+                                            <div class="badge bg-success rounded-pill"
+                                                id="completed<%= category.name %>">
+                                                <%= category.sizeCompleted%>
+                                            </div>
+                                        </div>
+                                </a>
+                                <button class="btn btn-danger btn-sm rounded-circle float-end"
+                                    id="deleteCategory<%= category.name %>" hidden>
+                        <li class="bi bi-trash"></li></button>
+            </div>
+            </li>
+            <% }) %>
                 </ul>
                 <button class="btn btn-primary mt-4" data-bs-toggle="modal" data-bs-target="#addCategoryModal">Add
                     Category</button>
-            </div>
-            <% if (currentCategory) { %>
+        </div>
+        <% if (currentCategory) { %>
             <div class="col-10">
                 <div class="d-flex justify-content-between align-items-center">
-                <h2 class="mt-3"><%= currentCategory %></h2>   <button class="btn btn-primary mt-4" data-bs-toggle="modal" data-bs-target="#addReminderModal">Add
-                    Reminder</button>
+                    <h2 class="mt-3">
+                        <%= currentCategory %>
+                    </h2> <button class="btn btn-primary mt-4" data-bs-toggle="modal"
+                        data-bs-target="#addReminderModal">Add
+                        Reminder</button>
                 </div>
-           
-                <ul class="list-group mt-4">
-                    <% items.filter(reminder => !reminder.completed).forEach(reminder=> { %>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
+
+                <ul class="list-group mt-4" id="uncompleteList">
+                    <% items.filter(reminder=> !reminder.completed).forEach(reminder=> { %>
+                        <li class="list-group-item d-flex justify-content-between align-items-center"
+                            id="item<%=reminder.id%>">
                             <div id="front" class="d-flex">
                                 <input type="checkbox" class="btn-check" id="btncheck<%=reminder.id%>"
                                     autocomplete="off" <%=reminder.completed ? 'checked' : '' %> >
-                                <label class="btn btn-outline-primary" id="btnfor<%=reminder.id%>" for="btncheck<%=reminder.id%>">&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                                <label class="btn btn-outline-primary" id="btnfor<%=reminder.id%>"
+                                    for="btncheck<%=reminder.id%>">&nbsp;&nbsp;&nbsp;&nbsp;</label>
                                 <div class="ms-3">
                                     <h5 class="mb-0">
                                         <%= reminder.title %>
@@ -50,7 +74,6 @@
                                         <%= reminder.description %>
                                     </p>
                                 </div>
-
                             </div>
                             <span class="<%= reminder.date < new Date() ? 'text-danger' : '' %>">
                                 <%= reminder.date ? new Date(reminder.date).toLocaleDateString() : "" %>
@@ -58,14 +81,17 @@
                         </li>
                         <% }) %>
                 </ul>
+
                 <h3 class="mt-4">Completed</h3>
-                <ul class="list-group mt-4">
-                    <% items.filter(reminder => reminder.completed).forEach(reminder=> { %>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                <ul class="list-group mt-4" id="completeList">
+                    <% items.filter(reminder=> reminder.completed).forEach(reminder=> { %>
+                        <li class="list-group-item d-flex justify-content-between align-items-center"
+                            id="item<%=reminder.id%>">
                             <div id="front" class="d-flex">
                                 <input type="checkbox" class="btn-check" id="btncheck<%=reminder.id%>"
                                     autocomplete="off" <%=reminder.completed ? 'checked' : '' %> >
-                                <label class="btn btn-outline-primary" id="btnfor<%=reminder.id%>" for="btncheck<%=reminder.id%>">&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                                <label class="btn btn-outline-primary" id="btnfor<%=reminder.id%>"
+                                    for="btncheck<%=reminder.id%>">&nbsp;&nbsp;&nbsp;&nbsp;</label>
                                 <div class="ms-3">
                                     <h5 class="mb-0">
                                         <%= reminder.title %>
@@ -74,7 +100,6 @@
                                         <%= reminder.description %>
                                     </p>
                                 </div>
-
                             </div>
                             <span class="<%= reminder.date < new Date() ? 'text-danger' : '' %>">
                                 <%= reminder.date ? new Date(reminder.date).toLocaleDateString() : "" %>
@@ -82,9 +107,10 @@
                         </li>
                         <% }) %>
                 </ul>
+
             </div>
             <% } %>
-        </div>
+    </div>
     </div>
 
     <!-- Modal -->
@@ -130,7 +156,7 @@
                             <label for="list" class="form-label">List</label>
                             <select class="form-select" id="list">
                                 <!-- current category is the first -->
-                                <% categories.sort((a, b) => a.name === currentCategory ? -1 : 1).forEach(category=> { %>
+                                <% categories.sort((a, b)=> a.name === currentCategory ? -1 : 1).forEach(category=> { %>
                                     <option>
                                         <%= category.name %>
                                     </option>
@@ -182,8 +208,8 @@
             dateCheckbox.addEventListener('change', () => {
                 date.hidden = !date.hidden;
             });
-            const add = document.getElementById('add');
 
+            const add = document.getElementById('add');
             add.addEventListener('click', (event) => {
                 event.preventDefault();
                 const title = document.getElementById('title').value;
@@ -244,85 +270,100 @@
                     }
                 });
             });
-        });
 
-        const checkboxes = document.querySelectorAll('.btn-check');
-        checkboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', (event) => {
-                const id = event.target.id.replace('btncheck', '');
+            const checkboxes = document.querySelectorAll('.btn-check');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', (event) => {
+                    const id = event.target.id.replace('btncheck', '');
+                    const completed = event.target.checked;
+                    fetch(`/api/reminders/${id}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ completed })
+                    }).then(response => {
+                        if (response.ok) {
+                            const item = document.getElementById(`item${id}`);
+                            const parentList = completed ? document.getElementById('completeList') : document.getElementById('uncompleteList');
+                            parentList.appendChild(item);
+                            var cat = "<%= currentCategory %>";
+                            const totalBadge = document.getElementById(`total${cat}`);
+                            const uncompletedBadge = document.getElementById(`uncompleted${cat}`);
+                            const completedBadge = document.getElementById(`completed${cat}`);
 
-                
-                fetch(`/api/reminders/${id}`, {
-                    method: 'PATCH',
+                            if (completed) {
+                                completedBadge.innerText = parseInt(completedBadge.innerText) + 1;
+                                uncompletedBadge.innerText = parseInt(uncompletedBadge.innerText) - 1;
+                            } else {
+                                completedBadge.innerText = parseInt(completedBadge.innerText) - 1;
+                                uncompletedBadge.innerText = parseInt(uncompletedBadge.innerText) + 1;
+                            }
+
+
+                        }
+                    });
+                });
+            });
+
+            const addCategory = document.getElementById('addCategory');
+            addCategory.addEventListener('click', (event) => {
+                event.preventDefault();
+                const categoryName = document.getElementById('categoryName').value;
+                if (!categoryName) {
+                    document.getElementById('valueErrorCat').hidden = false;
+                    document.getElementById('valueErrorCat').innerText = 'Please fill all the fields';
+                    document.getElementById('categoryName').classList.add('is-invalid');
+                } else {
+                    document.getElementById('valueErrorCat').hidden = true;
+                    document.getElementById('categoryName').classList.remove('is-invalid');
+                }
+
+                fetch('/api/categories', {
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        completed: event.target.checked
-                    })
+                    body: JSON.stringify({ name: categoryName })
                 }).then(response => {
                     if (response.ok) {
-                         location.reload();       
+                        var modalCategory = new bootstrap.Modal(document.getElementById('addCategoryModal'));
+                        modalCategory.hide();
+                        location.reload();
+                        document.getElementById('valueErrorCat').hidden = true;
+                    } else {
+                        document.getElementById('valueErrorCat').hidden = false;
+                        document.getElementById('valueErrorCat').innerText = 'An error occurred!';
                     }
                 });
             });
-        });
 
-        const addCategory = document.getElementById('addCategory');
-        addCategory.addEventListener('click', (event) => {
-            event.preventDefault();
-            const categoryName = document.getElementById('categoryName').value;
-            if (!categoryName) {
-                document.getElementById('valueErrorCat').hidden = false;
-                document.getElementById('valueErrorCat').innerText = 'Please fill all the fields';
-                document.getElementById('categoryName').classList.add('is-invalid');
-              
-            } else {
-                document.getElementById('valueErrorCat').hidden = true;
-                document.getElementById('categoryName').classList.remove('is-invalid');
-            }
-
-            fetch('/api/categories', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    name: categoryName
-                })
-            }).then(response => {
-                if (response.ok) {
-                    var modalCategory = new bootstrap.Modal(document.getElementById('addCategoryModal'));
-                    modalCategory.hide();
-                    location.reload();
-                    document.getElementById('valueErrorCat').hidden = true;
-                } else {
-                    document.getElementById('valueErrorCat').hidden = false;
-                    document.getElementById('valueErrorCat').innerText = 'An error occurred!';
-                }
+            const editMode = document.getElementById('editMode');
+            editMode.addEventListener('click', () => {
+                const deleteCategoryButtons = document.querySelectorAll('[id^="deleteCategory"]');
+                deleteCategoryButtons.forEach(button => {
+                    button.hidden = !button.hidden;
+                });
+                //const stats = document.querySelectorAll('#stats');
+                //stats.forEach(stat => {
+                //    stat.hidden = !stat.hidden;
+                //});
             });
-        });
 
-        const editMode = document.getElementById('editMode');
-        editMode.addEventListener('click', () => {
             const deleteCategoryButtons = document.querySelectorAll('[id^="deleteCategory"]');
             deleteCategoryButtons.forEach(button => {
-                button.hidden = !button.hidden;
-            });
-        });
-
-        const deleteCategoryButtons = document.querySelectorAll('[id^="deleteCategory"]');
-        deleteCategoryButtons.forEach(button => {
-            button.addEventListener('click', (event) => {
-                const id = event.target.id.replace('deleteCategory', '');
-                fetch(`/api/categories/${id}`, {
-                    method: 'DELETE'
-                }).then(response => {
-                    if (response.ok) {
-                        location.reload();
-                    }
+                button.addEventListener('click', (event) => {
+                    const categoryName = event.target.id.replace('deleteCategory', '');
+                    fetch(`/api/categories/${categoryName}`, {
+                        method: 'DELETE'
+                    }).then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        }
+                    });
                 });
             });
+
         });
 
     </script>

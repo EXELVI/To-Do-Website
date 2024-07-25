@@ -78,12 +78,22 @@ app.get('/auth/discord/callback',
     }
 );
 
+function countProps(obj) {
+    var count = 0;
+    for (var p in obj) {
+        obj.hasOwnProperty(p) && count++;
+    }
+    return count;
+}
+
 app.get('/main', async (req, res) => {
     if (!req.isAuthenticated()) return res.redirect('/auth/discord');
     const db = client.db('to-do');
     const collection = db.collection('to-do');
+    var allItems = await collection.find().toArray() || [];
+    allItems = allItems.filter(x => x.users.includes(req.user.id));
     var categories = await db.collection('categories').find({ user: req.user.id }).toArray() || [];
-    if (!req.query.category) {
+    if (!req.query.category || !categories.find(x => x.name == req.query.category)) {
         var first = categories[0];
         if (!first) {
             var items = []
@@ -95,7 +105,15 @@ app.get('/main', async (req, res) => {
 
     var items = await collection.find({ category: req.query.category }).toArray() || [];
     items = items.filter(x => x.users.includes(req.user.id));
-
+    
+    categories = categories.map(category => {
+        var categoryItems = allItems.filter(x => x.category == category.name);
+        category.size = categoryItems.length;
+        category.sizeCompleted = categoryItems.filter(x => x.completed).length;
+        category.sizeUncompleted = categoryItems.filter(x => !x.completed).length;
+        return category;
+    });
+    console.log(categories);
     res.render('index', { items: items, categories: categories, currentCategory: req.query.category });
 
 
