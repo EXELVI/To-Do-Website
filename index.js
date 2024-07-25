@@ -99,13 +99,13 @@ app.get('/main', async (req, res) => {
             var items = []
             return res.render('index', { items: items, categories: categories, currentCategory: false });
         } else {
-                return res.redirect(`/main?category=${first.name}`);
+            return res.redirect(`/main?category=${first.name}`);
         }
-    } 
+    }
 
     var items = await collection.find({ category: req.query.category }).toArray() || [];
     items = items.filter(x => x.users.includes(req.user.id));
-    
+
     categories = categories.map(category => {
         var categoryItems = allItems.filter(x => x.category == category.name);
         category.size = categoryItems.length;
@@ -113,7 +113,6 @@ app.get('/main', async (req, res) => {
         category.sizeUncompleted = categoryItems.filter(x => !x.completed).length;
         return category;
     });
-    console.log(categories);
     res.render('index', { items: items, categories: categories, currentCategory: req.query.category });
 
 
@@ -147,6 +146,16 @@ router.post('/reminders', (req, res) => {
     res.redirect('/main');
 });
 
+router.get('/reminders/:id', async (req, res) => {
+    if (!req.isAuthenticated()) return res.redirect('/auth/discord');
+    const db = client.db('to-do');
+    const collection = db.collection('to-do');
+    var id = req.params.id;
+    var items = await collection.find({ id: id }).toArray();
+    items = items.filter(x => x.users.includes(req.user.id)); // for security reasons
+    res.json(items[0]);
+});
+
 router.patch('/reminders/:id', async (req, res) => {
     if (!req.isAuthenticated()) return res.redirect('/auth/discord');
     const db = client.db('to-do');
@@ -154,19 +163,21 @@ router.patch('/reminders/:id', async (req, res) => {
 
     var id = req.params.id;
     var body = req.body;
-
+    console.log(body);
     var completed = body.completed;
+    if (completed != undefined) {
+        await collection.updateOne({ id: id }, { $set: { completed: completed, completedBy: req.user.id, completedTimestamp: Date.now() } });
+    } else {
+        await collection.updateOne({ id: id }, { $set: body });
+    }
 
-    await collection.updateOne({ id: id }, { $set: { completed: completed, completedBy: req.user.id, completedTimestamp: Date.now() } });
-
-    res.send('/main');
+    res.status(200).json({ success: true });
 });
 
 router.post("/categories", async (req, res) => {
     if (!req.isAuthenticated()) return res.redirect('/auth/discord');
     const db = client.db('to-do');
     const collection = db.collection('categories');
-    console.log(req.body)
     var name = req.body.name;
 
     await collection.insertOne({
@@ -174,7 +185,7 @@ router.post("/categories", async (req, res) => {
         user: req.user.id
     });
 
-    res.redirect('/main');
+    res.status(200).json({ success: true });
 });
 
 router.delete('/categories/:name', async (req, res) => {
@@ -188,7 +199,20 @@ router.delete('/categories/:name', async (req, res) => {
     await collection.deleteOne({ name: name });
     await toDoCollection.deleteMany({ category: name });
 
-    res.redirect('/main');
+    res.status(200).json({ success: true });
+});
+
+router.get('/categories', async (req, res) => {
+    if (!req.isAuthenticated()) return res.redirect('/auth/discord');
+    const db = client.db('to-do');
+    const collection = db.collection('categories');
+    var categories = await collection.find({ user: req.user.id }).toArray();
+    res.json(categories);
+});
+
+router.get('/logout', (req, res) => {
+    req.logout();
+    res.redirect('/');
 });
 
 app.use('/api', router);
