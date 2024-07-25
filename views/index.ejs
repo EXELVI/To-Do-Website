@@ -16,7 +16,7 @@
                 <ul class="nav flex-column mt-4">
                     <% categories.forEach(category=> { %>
                         <li class="nav-item">
-                            <a class="nav-link <%= currentCategory === category.id ? 'active' : '' %>" href="#<%= category.id %>">
+                            <a class="nav-link <%= currentCategory === category.name ? 'active' : '' %>" href="/main?category=<%= category.name %>">
                                 <%= category.name %>
                             </a>
                         </li>
@@ -54,7 +54,7 @@
                             <div id="front" class="d-flex">
                                 <input type="checkbox" class="btn-check" id="btncheck<%=reminder.id%>"
                                     autocomplete="off" <%=reminder.completed ? 'checked' : '' %> >
-                                <label class="btn btn-outline-primary" for="btncheck<%=reminder.id%>"></label>
+                                <label class="btn btn-outline-primary" id="btnfor<%=reminder.id%>" for="btncheck<%=reminder.id%>">&nbsp;&nbsp;&nbsp;&nbsp;</label>
                                 <div class="ms-3">
                                     <h5 class="mb-0">
                                         <%= reminder.title %>
@@ -111,7 +111,7 @@
                         <div class="mb-3">
                             <label for="priority" class="form-label">Priority</label>
                             <select class="form-select" id="priority">
-                                <option selected>No priority</option>
+                                <option value="0" selected>No priority</option>
                                 <option value="1">Low</option>
                                 <option value="2">Medium</option>
                                 <option value="3">High</option>
@@ -120,8 +120,9 @@
                         <div class="mb-3">
                             <label for="list" class="form-label">List</label>
                             <select class="form-select" id="list">
-                                <% categories.forEach(category=> { %>
-                                    <option value="<%= category.id %>">
+                                <!-- current category is the first -->
+                                <% categories.sort((a, b) => a.name === currentCategory ? -1 : 1).forEach(category=> { %>
+                                    <option>
                                         <%= category.name %>
                                     </option>
                                     <% }) %>
@@ -167,9 +168,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const modal = new bootstrap.Modal(document.getElementById('addReminderModal'));
-            const modalCategory = new bootstrap.Modal(document.getElementById('addCategoryModal'));
-
             const dateCheckbox = document.getElementById('dateCheckbox');
             const date = document.getElementById('date');
             dateCheckbox.addEventListener('change', () => {
@@ -227,6 +225,7 @@
                     })
                 }).then(response => {
                     if (response.ok) {
+                        var modal = new bootstrap.Modal(document.getElementById('addReminderModal'));
                         modal.hide();
                         location.reload();
                         document.getElementById('valueError').hidden = true;
@@ -242,6 +241,8 @@
         checkboxes.forEach(checkbox => {
             checkbox.addEventListener('change', (event) => {
                 const id = event.target.id.replace('btncheck', '');
+
+                
                 fetch(`/api/reminders/${id}`, {
                     method: 'PATCH',
                     headers: {
@@ -282,8 +283,10 @@
                 })
             }).then(response => {
                 if (response.ok) {
+                    var modalCategory = new bootstrap.Modal(document.getElementById('addCategoryModal'));
                     modalCategory.hide();
                     location.reload();
+                    document.getElementById('valueErrorCat').hidden = true;
                 } else {
                     document.getElementById('valueErrorCat').hidden = false;
                     document.getElementById('valueErrorCat').innerText = 'An error occurred!';

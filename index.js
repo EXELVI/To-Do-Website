@@ -9,6 +9,7 @@ const fs = require('fs');
 var DiscordStrategy = require('passport-discord').Strategy;
 var passport = require('passport');
 var session = require('express-session');
+const { v4: uuidv4 } = require('uuid');
 
 var scopes = ['identify'];
 
@@ -56,6 +57,7 @@ const router = express.Router();
 
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(session({
@@ -103,7 +105,7 @@ router.post('/reminders', (req, res) => {
     if (!req.isAuthenticated()) return res.redirect('/auth/discord');
     const db = client.db('to-do');
     const collection = db.collection('to-do');
-
+    console.log(req.body)
     var title = req.body.title,
         description = req.body.description,
         date = req.body.date,
@@ -113,15 +115,16 @@ router.post('/reminders', (req, res) => {
     collection.insertOne({
         title: title,
         description: description,
-        date: date,
+        date: date || false,
         priority: priority,
         users: [req.user.id],
-        category: list
+        category: list,
+        id : uuidv4(),
     });
     res.redirect('/main');
 });
 
-router.post('/reminders/:id', async (req, res) => {
+router.patch('/reminders/:id', async (req, res) => {
     if (!req.isAuthenticated()) return res.redirect('/auth/discord');
     const db = client.db('to-do');
     const collection = db.collection('to-do');
@@ -138,9 +141,9 @@ router.post("/categories", async (req, res) => {
     if (!req.isAuthenticated()) return res.redirect('/auth/discord');
     const db = client.db('to-do');
     const collection = db.collection('categories');
-
-    var name = req.body.name;
     console.log(req.body)
+    var name = req.body.name;
+
     await collection.insertOne({
         name: name,
         user: req.user.id
