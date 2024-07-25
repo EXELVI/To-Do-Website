@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promemoria</title>
+   <style>
+    body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    height: 100vh;
+}
+
+.container {
+    display: flex;
+    width: 100%;
+}
+
+.sidebar {
+    background-color: #f2f2f2;
+    padding: 20px;
+    width: 250px;
+}
+
+.sidebar h2 {
+    font-size: 1.5em;
+    color: #007aff;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    margin: 10px 0;
+}
+
+.sidebar ul li a {
+    text-decoration: none;
+    color: #007aff;
+    font-size: 1.2em;
+}
+
+.main-content {
+    flex-grow: 1;
+    background-color: #ffffff;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.main-content header {
+    border-bottom: 2px solid #007aff;
+    margin-bottom: 20px;
+}
+
+.main-content header h1 {
+    color: #007aff;
+    font-size: 2em;
+    margin: 0;
+}
+
+.reminders {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.reminder {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.reminder input[type="checkbox"] {
+    margin-right: 10px;
+    transform: scale(1.5);
+}
+
+.reminder label {
+    flex-grow: 1;
+    font-size: 1.2em;
+}
+
+.reminder .date {
+    font-size: 0.9em;
+    margin-left: 10px;
+}
+
+   </style>
+    
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Reminders</h2>
+            <ul>
+             
+            </ul>
+        </aside>
+        <main class="main-content">
+            <header>
+                <h1>Reminders</h1>
+            </header>
+            <section class="reminders">
+                <% items.forEach(reminder => { %>
+                    <div class="reminder">
+                        <input type="checkbox" <% if (reminder.completed) { %>checked<% } %>>
+                        <label><%= reminder.title %></label>
+                        <label><%= reminder.description %></label>
+                        <%- reminder.date ? '<span class="date" style="color:' + (reminder.date < new Date() ? 'red' : 'white') + '">' + new Date(reminder.date).toLocaleDateString() + '</span>' : '' %>
+                        
+                    </div>
+                <% }); %>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

@@ -15,9 +15,19 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 const databasePromise = MongoClient.connect(process.env.mongodb, { useNewUrlParser: true });
 
-app.get('/', (req, res) => {
-    res.render('index');
+databasePromise.then(async client => {
+    console.log('Connected to database');
+    const db = client.db('to-do');
+    const collection = db.collection('to-do');
+
+    var items = await collection.find({}).toArray();
+
+    app.get('/', (req, res) => {
+        res.render('index', { items: items });
+    });
+
 });
+
 
 
 var httpServer = http.createServer(app);
