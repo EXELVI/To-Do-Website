@@ -52,7 +52,7 @@ passport.use(new DiscordStrategy({
 ));
 
 const app = express();
-
+const router = express.Router();
 
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -80,19 +80,36 @@ app.get('/main', async (req, res) => {
     if (!req.isAuthenticated()) return res.redirect('/auth/discord');
     const db = client.db('to-do');
     const collection = db.collection('to-do');
-    var items = await collection.find({ }).toArray();
-    var categories = await db.collection('categories').find({ }).toArray() || [];
+    var items = await collection.find({}).toArray();
+    var categories = await db.collection('categories').find({}).toArray() || [];
     items = items.filter(x => x.users.includes(req.user.id));
     categories = categories.filter(x => x.users.includes(req.user.id));
     res.render('index', { items: items, categories: categories });
 });
 
-app.post('/add', async (req, res) => {
+router.post('/reminders', (req, res) => {
+    if (!req.isAuthenticated()) return res.redirect('/auth/discord');
     const db = client.db('to-do');
     const collection = db.collection('to-do');
+
+    var title = req.body.title,
+        description = req.body.description,
+        date = req.body.date,
+        priority = req.body.priority,
+        list = req.body.list
+
+    collection.insertOne({
+        title: title,
+        description: description,
+        date: date,
+        priority: priority,
+        users: [req.user.id],
+        list: list
+    });
+    res.redirect('/main');
 });
 
-
+app.use('/api', router);
 
 var httpServer = http.createServer(app);
 var httpsServer = https.createServer({
