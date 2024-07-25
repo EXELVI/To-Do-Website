@@ -86,6 +86,10 @@ function countProps(obj) {
     return count;
 }
 
+app.get('/', (req, res) => {
+    res.render('home');
+});
+
 app.get('/main', async (req, res) => {
     if (!req.isAuthenticated()) return res.redirect('/auth/discord');
     const db = client.db('to-do');
@@ -208,6 +212,15 @@ router.get('/categories', async (req, res) => {
     const collection = db.collection('categories');
     var categories = await collection.find({ user: req.user.id }).toArray();
     res.json(categories);
+});
+
+router.delete('/reminders/:id', async (req, res) => {
+    if (!req.isAuthenticated()) return res.redirect('/auth/discord');
+    const db = client.db('to-do');
+    const collection = db.collection('to-do');
+    var id = req.params.id;
+    await collection.deleteOne({ id: id });
+    res.status(200).json({ success: true });
 });
 
 router.get('/logout', (req, res) => {
